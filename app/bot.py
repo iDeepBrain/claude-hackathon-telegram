@@ -1,4 +1,4 @@
-import asyncio
+import redis.asyncio as aioredis
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 from app.config import settings
 from app.services.agent_client import AgentClient
@@ -8,13 +8,16 @@ from app.handlers.document import document_handler
 from app.handlers.photo import photo_handler
 
 
-async def main() -> None:
-    agent_client = AgentClient(base_url=settings.agent_url)
+async def _post_init(application) -> None:
+    application.bot_data["agent_client"] = AgentClient(base_url=settings.agent_url)
+    application.bot_data["redis"] = aioredis.from_url(settings.redis_url)
 
+
+def main() -> None:
     app = (
         ApplicationBuilder()
         .token(settings.telegram_bot_token)
-        .post_init(lambda a: a.bot_data.update({"agent_client": agent_client}))
+        .post_init(_post_init)
         .build()
     )
 
@@ -24,14 +27,14 @@ async def main() -> None:
     app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
 
     if settings.telegram_mode == "webhook":
-        await app.run_webhook(
+        app.run_webhook(
             listen="0.0.0.0",
             port=settings.telegram_webhook_port,
             webhook_url=settings.telegram_webhook_url,
         )
     else:
-        await app.run_polling(drop_pending_updates=True)
+        app.run_polling(drop_pending_updates=True)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

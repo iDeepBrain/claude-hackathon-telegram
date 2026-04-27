@@ -1,36 +1,40 @@
 import pytest
+from unittest.mock import patch
 from pydantic import ValidationError
 
 
-def test_settings_loads_required_token(monkeypatch):
-    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "fake-token-123")
-    monkeypatch.delenv("TELEGRAM_MODE", raising=False)
-    monkeypatch.delenv("AGENT_URL", raising=False)
-    import importlib
-    import app.config as cfg_module
-    importlib.reload(cfg_module)
-    settings = cfg_module.Settings()
-    assert settings.telegram_bot_token == "fake-token-123"
+def test_settings_loads_required_token():
+    from app.config import Settings
+    with patch.dict("os.environ", {"TELEGRAM_BOT_TOKEN": "fake-token-123"}, clear=True):
+        s = Settings(_env_file=None)
+    assert s.telegram_bot_token == "fake-token-123"
 
 
 def test_settings_defaults():
-    import importlib
-    import app.config as cfg_module
-    importlib.reload(cfg_module)
-    from unittest.mock import patch
-    with patch.dict("os.environ", {"TELEGRAM_BOT_TOKEN": "tok"}, clear=False):
-        s = cfg_module.Settings()
+    from app.config import Settings
+    with patch.dict("os.environ", {"TELEGRAM_BOT_TOKEN": "tok"}, clear=True):
+        s = Settings(_env_file=None)
     assert s.telegram_mode == "polling"
     assert s.agent_url == "http://localhost:8000"
+    assert s.redis_url == "redis://redis:6379"
     assert s.telegram_webhook_port == 8443
     assert s.telegram_webhook_url == ""
 
 
 def test_settings_missing_token_raises():
-    import importlib, os
-    import app.config as cfg_module
-    importlib.reload(cfg_module)
-    env = {k: v for k, v in os.environ.items() if k != "TELEGRAM_BOT_TOKEN"}
+    from app.config import Settings
     with pytest.raises((ValidationError, Exception)):
-        with __import__("unittest.mock", fromlist=["patch"]).patch.dict("os.environ", env, clear=True):
-            cfg_module.Settings()
+        with patch.dict("os.environ", {}, clear=True):
+            Settings(_env_file=None)
+
+
+def test_settings_env_override():
+    from app.config import Settings
+    with patch.dict("os.environ", {
+        "TELEGRAM_BOT_TOKEN": "tok",
+        "AGENT_URL": "http://custom:9000",
+        "REDIS_URL": "redis://custom:6380",
+    }, clear=True):
+        s = Settings(_env_file=None)
+    assert s.agent_url == "http://custom:9000"
+    assert s.redis_url == "redis://custom:6380"
