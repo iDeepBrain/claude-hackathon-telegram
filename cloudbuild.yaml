@@ -1,0 +1,45 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build'
+    args:
+      - build
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/alma-telegram-bot:$SHORT_SHA'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/alma-telegram-bot:latest'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push'
+    args:
+      - push
+      - '--all-tags'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/alma-telegram-bot'
+    waitFor: ['build']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - alma-telegram-bot
+      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/alma-telegram-bot:$SHORT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--no-allow-unauthenticated'
+      - '--port=8000'
+      - '--memory=512Mi'
+      - '--cpu=0.5'
+      - '--min-instances=1'
+      - '--max-instances=1'
+      - '--set-env-vars=^|^AGENT_URL=${_AGENT_URL}|TELEGRAM_MODE=polling|LOG_LEVEL=INFO'
+      - '--set-secrets=TELEGRAM_BOT_TOKEN=TELEGRAM_BOT_TOKEN:latest,REDIS_URL=ALMA_REDIS_URL:latest'
+    waitFor: ['push']
+
+substitutions:
+  _AGENT_URL: 'https://alma-agent-PLACEHOLDER.us-central1.run.app'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+timeout: '900s'
