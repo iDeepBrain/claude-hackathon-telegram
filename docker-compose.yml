@@ -1,0 +1,17 @@
+# Stand-alone: levanta solo el telegram-bot conectado al stack de claude-hackathon-infra.
+# Para levantar el stack completo (redis + mcp + agent + bot), usar:
+#   cd ../claude-hackathon-infra && docker compose up
+services:
+  telegram-bot:
+    build: .
+    env_file: .env
+    environment:
+      - AGENT_URL=http://agent:8000
+      - TELEGRAM_MODE=polling
+    networks:
+      - hackathon
+
+networks:
+  hackathon:
+    external: true
+    name: claude-hackathon-infra_hackathon

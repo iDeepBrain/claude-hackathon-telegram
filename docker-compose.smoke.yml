@@ -1,0 +1,28 @@
+# Smoke test: corre unit tests + verifica conexiones + envía notificaciones Telegram.
+#
+# Requiere que el stack de infra esté corriendo:
+#   cd ../claude-hackathon-infra && docker compose up -d
+#
+# Luego, desde este repo:
+#   docker compose -f docker-compose.smoke.yml up --build
+#
+# Si es la primera vez, envía /start al bot antes para que el smoke test
+# detecte tu chat_id desde Redis y te envíe las notificaciones.
+
+services:
+  smoke-test:
+    build: .
+    command: python scripts/smoke_test.py
+    env_file: .env
+    environment:
+      - AGENT_URL=http://agent:8000
+      - REDIS_URL=redis://redis:6379
+      - TELEGRAM_MODE=polling
+    networks:
+      - hackathon
+    restart: "no"
+
+networks:
+  hackathon:
+    external: true
+    name: claude-hackathon-infra_hackathon
