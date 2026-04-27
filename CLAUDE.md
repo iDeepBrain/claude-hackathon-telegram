@@ -13,10 +13,12 @@ docker compose up --build -d
 
 ```bash
 cd claude-hackathon-telegram
-docker compose up --build -d
+docker compose -f docker-compose.standalone.yml up --build -d
 ```
 
-El `docker-compose.yml` de este repo usa la red `claude-hackathon-infra_hackathon` como `external: true`.
+El compose standalone usa la red `claude-hackathon-infra_hackathon` como `external: true`.
+
+> Renombrado a `.standalone.yml` para no chocar con el stack de `claude-hackathon-infra`.
 
 ## Responsabilidad crítica: almacenar chat_id
 
