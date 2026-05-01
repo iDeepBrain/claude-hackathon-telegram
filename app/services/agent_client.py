@@ -1,9 +1,18 @@
+import os
+
 import httpx
 
 
 class AgentClient:
     def __init__(self, base_url: str):
-        self.client = httpx.AsyncClient(base_url=base_url, timeout=60.0)
+        # Internal bearer — when set, every outbound call carries
+        # Authorization: Bearer <token>. The agent's middleware
+        # validates it; without the header those endpoints return 401.
+        # If the env var is empty (local dev without the secret), the
+        # client sends no Authorization and the agent stays fail-open.
+        token = os.getenv("ALMA_INTERNAL_TOKEN", "").strip()
+        headers = {"Authorization": f"Bearer {token}"} if token else None
+        self.client = httpx.AsyncClient(base_url=base_url, timeout=60.0, headers=headers)
 
     async def chat(
         self,

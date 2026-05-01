@@ -43,7 +43,7 @@ steps:
       - '--min-instances=1'
       - '--max-instances=1'
       - '--set-env-vars=^|^AGENT_URL=${_AGENT_URL}|TELEGRAM_MODE=polling|LOG_LEVEL=INFO'
-      - '--set-secrets=TELEGRAM_BOT_TOKEN=TELEGRAM_BOT_TOKEN:latest,REDIS_URL=ALMA_REDIS_URL:latest'
+      - '--set-secrets=TELEGRAM_BOT_TOKEN=TELEGRAM_BOT_TOKEN:latest,REDIS_URL=ALMA_REDIS_URL:latest,ALMA_INTERNAL_TOKEN=ALMA_INTERNAL_TOKEN:latest'
     waitFor: ['push']
 
 substitutions:
