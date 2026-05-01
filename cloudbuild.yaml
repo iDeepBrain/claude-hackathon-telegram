@@ -23,7 +23,12 @@ steps:
     args:
       - run
       - deploy
-      - alma-telegram-bot
+      # Service name MUST match the existing Cloud Run service that holds the
+      # bot token + chat_id history (alma-telegram-bot-dev). The historical
+      # `-dev` suffix was kept across all 3 services (agent/mcp/web/telegram)
+      # to avoid orphaning state by renaming. A separate `alma-telegram-bot`
+      # (no suffix) was created by accident in 2026-04-30 and was removed.
+      - alma-telegram-bot-dev
       - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/alma-telegram-bot:$SHORT_SHA'
       - '--region=us-central1'
       - '--platform=managed'
