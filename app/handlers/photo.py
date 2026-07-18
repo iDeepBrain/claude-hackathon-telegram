@@ -4,11 +4,14 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from app.services.agent_client import AgentClient
 from app.handlers.redis_store import store_chat_id
+from app.handlers.gate import allow_message
 
 _AGENT_DOWN = "⚠️ El agente no está disponible ahora mismo. Inténtalo en unos minutos."
 
 
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not await allow_message(update, context):
+        return
     client: AgentClient = context.bot_data["agent_client"]
     tg_user_id = update.effective_user.id
     chat_id = update.effective_chat.id
